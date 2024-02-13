@@ -1,20 +1,49 @@
-import React, { useState } from 'react'
+import React, { useEffect, useState } from 'react'
 import { Link, useNavigate } from 'react-router-dom'
+import { signInWithEmailAndPassword } from "firebase/auth";
+import { auth } from '../Firebase/FirebaseConfig'
 
-const Login = ({email, password}) => {
+
+const Login = () => {
 
   const data = {
-    pseudo:'',
     email:'',
     password: '',
-    corfirmPassword:''
   }
 
+  const navigate = useNavigate();
   const [loginData, setLoginData] = useState(data)
+  const [btn, setBtn] = useState(false)
+  const [error, setError] = useState('')
+  const { email, password} = loginData
 
   const handleChange = e => {
     setLoginData({...loginData, [e.target.id]: e.target.value})
   }
+
+  useEffect(() => {
+    if(password.length > 5 && email !== ''){
+      setBtn(true)
+    } else if(btn === true){
+      setBtn(false)
+    }
+  }, [email, password, btn])
+
+  const handleSubmit = e => {
+    e.preventDefault()
+    const { email, password } = loginData
+    signInWithEmailAndPassword(auth, email, password)
+    .then(user => {
+      setLoginData({...data})
+      navigate('/welcome', {replace: true})
+
+    }).catch(error =>{
+      setError(error)
+      setLoginData({...data})
+    })
+  }
+  
+  const errorMsg = error !== '' && <span >{error.message}</span>
 
   return (
     <div className="signUpLoginBox">
@@ -23,9 +52,9 @@ const Login = ({email, password}) => {
             </div>
             <div className="formBoxRight">
                 <div className="formContent">
-                  
+                  {errorMsg}
                   <h2>Inscription</h2>
-                  <form /*onSubmit={handleSubmit}*/>
+                  <form onSubmit={handleSubmit}>
                     <div className="inputBox">
                       <input onChange={handleChange} value={email} type="email" id="email" required />
                       <label htmlFor="email">Email</label>
@@ -35,7 +64,8 @@ const Login = ({email, password}) => {
                       <label htmlFor="password">password</label>
                     </div>
                     
-                    {/* {btn} */}
+                    {<button disabled={btn ? false : true}>Connexion</button>}
+
                   </form>
                   <div className="linkContainer">
                     <Link className='simpleLink' to="/signup">Pas de compte ? Inscrivez-vous !</Link>
